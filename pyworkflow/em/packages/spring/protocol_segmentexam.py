@@ -31,6 +31,7 @@ import pyworkflow.em as em
 import pyworkflow.utils as pwutils
 
 import spring
+from convert import SpringDb
 
 
 
@@ -74,16 +75,22 @@ class SpringProtSegmentExam(em.ProtInitialVolume):
     def convertInputStep(self):
         inputParts = self.inputParticles.get()
 
+        # ---------- Write particles stack as hdf file ---------
         outputBase = "input_particles.hdf"
         outputFn = self._getPath(outputBase)
         tmpStk = outputFn.replace('.hdf', '.stk')
         self.info("Writing hdf stack to: " + outputFn)
-        #inputParts.writeStack(outputFn)
-        inputParts.writeStack(tmpStk)
+
+        # --------- Write the spring.db database file -----------
+        dbBase = 'spring.db'
+        springDb = SpringDb(self._getPath(dbBase))
+        springDb.writeSetOfParticles(inputParts, tmpStk)
+        springDb.commit()
         from pyworkflow.em.packages.eman2.convert import convertImage
         convertImage(tmpStk, outputFn)
         pwutils.cleanPath(tmpStk)
 
+        # ---------- Write txt files with parameters values -----
         outputTxt = self._getPath("input_params.txt")
         self.info("Writing parameters to: " + outputTxt)
         params = spring.Params()
@@ -92,7 +99,7 @@ class SpringProtSegmentExam(em.ProtInitialVolume):
         params['Power spectrum output image'] = 'power.hdf'
         params['Pixel size in Angstrom'] = inputParts.getSamplingRate()
         params['Estimated helix width in Angstrom'] = self.estimatedHelixWidth.get()
-        params['spring.db file'] = 'spring.db'
+        params['spring.db file'] = dbBase
         params.write(outputTxt)
             
     def runSegmentexam(self):
