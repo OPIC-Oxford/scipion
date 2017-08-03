@@ -37,5 +37,6 @@ _references = ['Desfosses2014']
 from spring import *
 
 from protocol_segmentexam import SpringProtSegmentExam
+from protocol_segclassreconstruct import SpringProtSegclassReconstruct
 
 _environ = getEnviron()
