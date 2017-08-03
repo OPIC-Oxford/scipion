@@ -78,7 +78,7 @@ class SpringDb:
         segment = self._csdb.SegmentTable()
         segment.helices = helix
         segment.micrographs = helix.micrographs
-        segment.stack_id = particle.getMicId()
+        segment.stack_id = particle.getIndex() - 1 # counting starts at 0
         coord = particle.getCoordinate()
         segment.x_coordinate_A = self._pixelsToAngs(coord.getX())
         segment.y_coordinate_A = self._pixelsToAngs(coord.getX())
@@ -114,9 +114,9 @@ class SpringDb:
 
         orderLabels = ['_micId', '_coordinate.filamentId', 'id']
         ih = ImageHandler()
+        i = 1
 
         for p in inputParts.iterItems(orderBy=orderLabels):
-            i = 1
             micId = p.getMicId()
             coord = p.getCoordinate()
             filamentId = coord.filamentId.get()

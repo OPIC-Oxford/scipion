@@ -29,20 +29,22 @@ from collections import OrderedDict
 
 from pyworkflow.utils import Environ
 
+
 SPRING_HOME = os.environ.get('SPRING_HOME',
                              os.path.join(os.environ['EM_ROOT'], 'spring'))
+SPRING_BIN = os.path.join(SPRING_HOME, 'bin')
+SPRING_PYTHON = os.path.join(SPRING_BIN, 'python')
 
 
 def getEnviron():
     """ Create the needed environment for Xmipp programs. """
     environ = Environ(os.environ)
-
-    SPRING_BIN = os.path.join(SPRING_HOME, 'bin')
-
-    environ.update({'PATH': SPRING_BIN},
-                   position=Environ.BEGIN
-                   )
+    environ.update({'PYTHONPATH': ''}, position=Environ.REPLACE)
     return environ
+
+def getCommand(progName):
+    """ Run a Spring program with the required Python. """
+    return os.path.join(SPRING_BIN, progName)
 
 
 class Params(OrderedDict):

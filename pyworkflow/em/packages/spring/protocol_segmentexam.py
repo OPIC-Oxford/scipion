@@ -88,10 +88,10 @@ class SpringProtSegmentExam(em.ProtInitialVolume):
         springDb.commit()
         from pyworkflow.em.packages.eman2.convert import convertImage
         convertImage(tmpStk, outputFn)
-        pwutils.cleanPath(tmpStk)
+        #pwutils.cleanPath(tmpStk)
 
         # ---------- Write txt files with parameters values -----
-        outputTxt = self._getPath("input_params.txt")
+        outputTxt = self.getInputParamsFn()
         self.info("Writing parameters to: " + outputTxt)
         params = spring.Params()
         params['Image input stack'] = outputBase
@@ -100,11 +100,19 @@ class SpringProtSegmentExam(em.ProtInitialVolume):
         params['Pixel size in Angstrom'] = inputParts.getSamplingRate()
         params['Estimated helix width in Angstrom'] = self.estimatedHelixWidth.get()
         params['spring.db file'] = dbBase
+        nMpi = self.numberOfMpi.get()
+        params['MPI option'] = str(nMpi > 1)
+        params['Number of CPUs'] = nMpi
         params.write(outputTxt)
             
     def runSegmentexam(self):
-        args = ''
-        # self.runJob("simple_prime", args, cwd=self._getPath())
+        cmd = spring.getCommand("segmentexam")
+        args = ' --f %s' % os.path.basename(self.getInputParamsFn())
+        args += ' --d output'
+        # The program is executed in the run folder
+        # MPI=1 because the program will take care of parallelization
+        # given in the input_params.txt
+        self.runJob(cmd, args, cwd=self._getPath(), numberOfMpi=1)
 
     def createOutputStep(self):
         pass
@@ -125,3 +133,6 @@ class SpringProtSegmentExam(em.ProtInitialVolume):
     
     def _methods(self):
         return []
+
+    def getInputParamsFn(self):
+        return self._getPath("input_params.txt")
