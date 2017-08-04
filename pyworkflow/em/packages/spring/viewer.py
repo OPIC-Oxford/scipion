@@ -24,23 +24,33 @@
 # *
 # **************************************************************************
 
-"""
-This sub-package contains data and protocol classes
-wrapping Spring  programs http://www.sachse.embl.de/emspring/index.html
-"""
+from pyworkflow.viewer import DESKTOP_TKINTER, WEB_DJANGO
+from pyworkflow.em.viewer import Viewer, CommandView
 
-from bibtex import _bibtex # Load bibtex dict with references
-
-_logo = "spring_logo.png"
-_references = ['Desfosses2014']
-
-from spring import *
-
-# ----- Protocols -------
-from protocol_segmentexam import SpringProtSegmentExam
 from protocol_segclassreconstruct import SpringProtSegclassReconstruct
+import spring
 
-# ----- Viewers ---------
-from viewer import SpringViewerSegGridExplore
+    
+class SpringViewerSegGridExplore(Viewer):
+    """ Wrapper to visualize different type of objects
+    with the Xmipp program xmipp_showj. """
+    
+    _environments = [DESKTOP_TKINTER, WEB_DJANGO]
+    _targets = [SpringProtSegclassReconstruct]
+    _label = 'seggridexplore'
 
-_environ = getEnviron()
+    def _visualize(self, obj, **args):
+        baseOutput = 'seggridexplore_params.txt'
+        outputTxt = obj._getPath(baseOutput)
+        print("Writing parameters to: " + outputTxt)
+
+        params = spring.Params()
+        params['Grid database'] = 'output/grid.db'
+        params['Batch mode'] = False
+        params['EM name'] = 'recvol.hdf'
+        params.write(outputTxt)
+        cmd = spring.getCommand('seggridexplore')
+        cmd += ' --f %s' % baseOutput
+        return [CommandView(cmd,
+                            env=spring.getEnviron(),
+                            cwd=obj.getWorkingDir())]
