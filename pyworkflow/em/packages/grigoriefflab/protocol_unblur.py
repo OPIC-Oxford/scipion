@@ -168,12 +168,12 @@ class ProtUnblur(ProtAlignMovies):
 
         self._createLink(movie)
         range = aN - a0 + 1
-        self._argsUnblur(movie, range)
 
-        movFolder = os.path.dirname(self._getMovieFn(movie))
-        
+        movieFolder = os.path.dirname(self._getMovieFn(movie))
+        self._argsUnblur(movie, range, movieFolder)
+
         try:
-            self.runJob(self._program, self._args, cwd=movFolder)
+            self.runJob(self._program, self._args, cwd=movieFolder)
         except:
             print("ERROR: Movie %s failed\n" % movie.getFileName())
 
@@ -193,8 +193,8 @@ class ProtUnblur(ProtAlignMovies):
         if not os.path.exists(UNBLUR_PATH):
             errors.append(
                 "Cannot find the Unblur program at: " + UNBLUR_PATH)
-        if self.inputMovies.get():
 
+        if self.inputMovies.get():
             if self.doApplyDoseFilter:
                 inputMovies = self.inputMovies.get()
                 doseFrame = inputMovies.getAcquisition().getDosePerFrame()
@@ -206,17 +206,23 @@ class ProtUnblur(ProtAlignMovies):
         return errors
 
     #--------------------------- UTILS functions -------------------------------
-    def _argsUnblur(self, movie, numberOfFrames):
+    def _argsUnblur(self, movie, numberOfFrames, movieFolder):
         """ Format argument for call unblur program. """
-        inputMovieFn = os.path.basename(self._getMovieFn(movie))
 
-        args = {'movieName': inputMovieFn,
+        # We will run unblur inside the the movie folder, so we need to
+        # adjust the path accordinly to be relative to that
+        movieFn = os.path.basename(self._getMovieFn(movie))
+        micFn = os.path.relpath(self._getMicFn(movie), movieFolder)
+        shiftsFn = os.path.relpath(self._getShiftsFn(movie), movieFolder)
+        frcFn = os.path.relpath(self._getFrcFn(movie), movieFolder)
+
+        args = {'movieName': movieFn,
                 'numberOfFramesPerMovie': numberOfFrames,
-                'micFnName': self._getMicFn(movie),
-                'shiftFnName': self._getShiftsFn(movie),
+                'micFnName': micFn,
+                'shiftFnName': shiftsFn,
                 'samplingRate': self.samplingRate,
                 'voltage': movie.getAcquisition().getVoltage(),
-                'frcFn': self._getFrcFn(movie),
+                'frcFn': frcFn,
                 'bfactor': self.bfactor.get(),
                 'minShiftInitSearch': self.minShiftInitSearch.get(),
                 'OutRadShiftLimit': self.OutRadShiftLimit.get(),
