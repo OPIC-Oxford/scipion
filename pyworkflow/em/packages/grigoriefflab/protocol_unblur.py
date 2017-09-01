@@ -169,9 +169,11 @@ class ProtUnblur(ProtAlignMovies):
         self._createLink(movie)
         range = aN - a0 + 1
         self._argsUnblur(movie, range)
+
+        movFolder = os.path.dirname(self._getMovieFn(movie))
         
         try:
-            self.runJob(self._program, self._args)
+            self.runJob(self._program, self._args, cwd=movFolder)
         except:
             print("ERROR: Movie %s failed\n" % movie.getFileName())
 
@@ -206,7 +208,9 @@ class ProtUnblur(ProtAlignMovies):
     #--------------------------- UTILS functions -------------------------------
     def _argsUnblur(self, movie, numberOfFrames):
         """ Format argument for call unblur program. """
-        args = {'movieName': self._getMovieFn(movie),
+        inputMovieFn = os.path.basename(self._getMovieFn(movie))
+
+        args = {'movieName': inputMovieFn,
                 'numberOfFramesPerMovie': numberOfFrames,
                 'micFnName': self._getMicFn(movie),
                 'shiftFnName': self._getShiftsFn(movie),
