@@ -172,9 +172,11 @@ class ProtProcessMovies(ProtPreprocessMicrographs):
         # Note2: We are serializing the Movie as a dict that can be passed
         # as parameter for a functionStep
         movieDict = movie.getObjDict(includeBasic=True)
+        gpu = getattr(movie, '_gpu', 0)
         movieStepId = self._insertFunctionStep('processMovieStep',
                                                movieDict,
                                                movie.hasAlignment(),
+                                               gpu,
                                                prerequisites=[])
         return movieStepId
 
@@ -183,7 +185,7 @@ class ProtProcessMovies(ProtPreprocessMicrographs):
         """ Should be implemented in sub-classes if needed. """
         pass
 
-    def processMovieStep(self, movieDict, hasAlignment):
+    def processMovieStep(self, movieDict, hasAlignment, gpu=0):
         movie = Movie()
         movie.setAcquisition(Acquisition())
 
@@ -263,8 +265,9 @@ class ProtProcessMovies(ProtPreprocessMicrographs):
             # Now set the new filename (either linked or converted)
             movie.setFileName(os.path.join(movieFolder, newMovieName))
             self.info("Processing movie: %s" % movie.getFileName())
+            self.info("Using GPU=%s" % gpu)
 
-            self._processMovie(movie)
+            self._processMovie(movie, gpu)
 
             if pwutils.envVarOn('SCIPION_DEBUG_NOCLEAN'):
                 self.info('Clean movie data DISABLED. '
@@ -319,7 +322,7 @@ class ProtProcessMovies(ProtPreprocessMicrographs):
         """
         return True
 
-    def _processMovie(self, movie):
+    def _processMovie(self, movie, gpu=0):
         """ Process the movie actions, remember to:
         1) Generate all output files inside movieFolder
            (usually with cwd in runJob)
