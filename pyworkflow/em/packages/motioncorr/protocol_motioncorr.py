@@ -218,6 +218,8 @@ class ProtMotionCorr(ProtAlignMovies):
 
     #--------------------------- STEPS functions -------------------------------
     def _processMovie(self, movie):
+        nextGpu = getattr(self, 'nextGpu', 0)
+
         inputMovies = self.inputMovies.get()
         movieFolder = self._getOutputMovieFolder(movie)
         outputMicFn = self._getRelPath(self._getOutputMicName(movie),
@@ -245,7 +247,7 @@ class ProtMotionCorr(ProtAlignMovies):
                         '-ned': '%d' % aN,
                         '-nss': '%d' % s0,
                         '-nes': '%d' % sN,
-                        '-gpu': self.GPUIDs.get(),
+                        '-gpu': nextGpu,
                         '-flg': logFile,
                         }
 
@@ -294,7 +296,7 @@ class ProtMotionCorr(ProtAlignMovies):
                         '-Trunc': '%d' % (abs(aN - numbOfFrames + 1)),
                         '-PixSize': inputMovies.getSamplingRate(),
                         '-kV': inputMovies.getAcquisition().getVoltage(),
-                        '-Gpu': self.GPUIDs.get(),
+                        '-Gpu': nextGpu,
                         '-LogFile': logFileBase,
                         }
             if getVersion('MOTIONCOR2') != '03162016':
@@ -359,6 +361,10 @@ class ProtMotionCorr(ProtAlignMovies):
                                       outputFn=self._getOutputMicThumbnail(movie))
         except:
             print("ERROR: Movie %s failed\n" % movie.getName())
+
+        NUMBER_OF_GPUS = 4
+        self.nextGpu = (nextGpu + 1) % NUMBER_OF_GPUS
+
 
     #--------------------------- INFO functions --------------------------------
     def _summary(self):
