@@ -217,8 +217,17 @@ class ProtMotionCorr(ProtAlignMovies):
         form.addParallelSection(threads=1, mpi=1)
 
     #--------------------------- STEPS functions -------------------------------
-    def _processMovie(self, movie):
+    def _insertMovieStep(self, movie):
         nextGpu = getattr(self, 'nextGpu', 0)
+        from pyworkflow.object import Integer
+        movie._gpu = Integer(nextGpu)
+        NUMBER_OF_GPUS = 4
+        self.nextGpu = (nextGpu + 1) % NUMBER_OF_GPUS
+
+        return ProtAlignMovies._insertMovieStep(self, movie)
+
+    def _processMovie(self, movie):
+        nextGpu = movie._gpu.get()
 
         inputMovies = self.inputMovies.get()
         movieFolder = self._getOutputMovieFolder(movie)
